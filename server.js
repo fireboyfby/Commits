@@ -15,16 +15,21 @@ app.post('/add-commit', async (req, res) => {
     const { commitMessage, changes } = req.body;
 
     try {
+        console.log('Fetching latest commit SHA...');
         const response = await axios.get(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/git/refs/heads/main`, {
             headers: { Authorization: `token ${GITHUB_TOKEN}` }
         });
         const shaLatestCommit = response.data.object.sha;
+        console.log(`Latest commit SHA: ${shaLatestCommit}`);
 
+        console.log('Fetching base tree SHA...');
         const responseTree = await axios.get(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/git/trees/${shaLatestCommit}`, {
             headers: { Authorization: `token ${GITHUB_TOKEN}` }
         });
         const baseTreeSha = responseTree.data.sha;
+        console.log(`Base tree SHA: ${baseTreeSha}`);
 
+        console.log('Creating blobs for changes...');
         const changesObj = JSON.parse(changes);
         const blobPromises = Object.keys(changesObj).map(filePath =>
             axios.post(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/git/blobs`, {
@@ -42,7 +47,9 @@ app.post('/add-commit', async (req, res) => {
             type: 'blob',
             sha: blob.data.sha
         }));
+        console.log('Blobs created.');
 
+        console.log('Creating new tree...');
         const responseTreeNew = await axios.post(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/git/trees`, {
             base_tree: baseTreeSha,
             tree
@@ -51,7 +58,9 @@ app.post('/add-commit', async (req, res) => {
         });
 
         const newTreeSha = responseTreeNew.data.sha;
+        console.log(`New tree SHA: ${newTreeSha}`);
 
+        console.log('Creating new commit...');
         const responseCommit = await axios.post(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/git/commits`, {
             message: commitMessage,
             tree: newTreeSha,
@@ -61,7 +70,9 @@ app.post('/add-commit', async (req, res) => {
         });
 
         const newCommitSha = responseCommit.data.sha;
+        console.log(`New commit SHA: ${newCommitSha}`);
 
+        console.log('Updating reference to point to new commit...');
         await axios.patch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/git/refs/heads/main`, {
             sha: newCommitSha
         }, {
@@ -70,7 +81,7 @@ app.post('/add-commit', async (req, res) => {
 
         res.status(200).send('Commit added successfully');
     } catch (error) {
-        console.error(error);
+        console.error('Error adding commit:', error);
         res.status(500).send('Failed to add commit');
     }
 });
