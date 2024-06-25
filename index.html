@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Commit Log with Pagination</title>
+    <title>Commit Log with Pagination and Add Commit Form</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -26,7 +26,7 @@
         .commit-message {
             font-size: 1.2em;
             margin-bottom: 5px;
-            color: #ff0404
+            color: #ff0404;
         }
         .commit-info {
             color: #0c0c0c;
@@ -40,6 +40,21 @@
             padding: 5px 10px;
             font-size: 16px;
         }
+        form {
+            margin-top: 20px;
+            text-align: center;
+        }
+        input, textarea {
+            display: block;
+            margin: 10px auto;
+            width: 80%;
+            max-width: 400px;
+            padding: 10px;
+        }
+        button[type="submit"] {
+            padding: 10px 20px;
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
@@ -49,6 +64,16 @@
         <button id="prevPage">Previous</button>
         <button id="nextPage">Next</button>
     </div>
+
+    <h1>Add Commit</h1>
+    <form id="commitForm">
+        <label for="commitMessage">Commit Message:</label>
+        <input type="text" id="commitMessage" name="commitMessage" required>
+        <label for="changes">Changes (JSON format):</label>
+        <textarea id="changes" name="changes" required></textarea>
+        <button type="submit">Add Commit</button>
+    </form>
+
     <script>
         let currentPage = 1;
         const commitsPerPage = 10;
@@ -86,6 +111,23 @@
 
             document.getElementById('nextPage').addEventListener('click', () => {
                 changePage(currentPage + 1);
+            });
+
+            document.getElementById('commitForm').addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const commitMessage = document.getElementById('commitMessage').value;
+                const changes = document.getElementById('changes').value;
+                const response = await fetch('http://localhost:3000/add-commit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ commitMessage, changes })
+                });
+                if (response.ok) {
+                    alert('Commit added successfully');
+                    fetchCommits(currentPage); // Refresh commits
+                } else {
+                    alert('Failed to add commit');
+                }
             });
         });
     </script>
