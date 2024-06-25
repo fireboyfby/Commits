@@ -1,11 +1,13 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
+require('dotenv').config(); // Load environment variables from .env file
+
 const app = express();
 
 app.use(bodyParser.json());
 
-const GITHUB_TOKEN = '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';
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN; // Use the environment variable
 const REPO_OWNER = 'fireboyfby';
 const REPO_NAME = 'Commits';
 
